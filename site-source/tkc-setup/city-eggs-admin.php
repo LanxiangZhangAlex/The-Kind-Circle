@@ -1,0 +1,70 @@
+<?php
+defined('ABSPATH') || exit;
+add_action('admin_menu',function(){
+ add_submenu_page('edit.php?post_type=tkc_quest','Check-ins / 投稿','Check-ins / 投稿','edit_pages','tkcq-checkins','tkcq_entries_admin');
+ add_submenu_page('edit.php?post_type=tkc_quest','Setup and guide','Setup / 使用说明','manage_options','tkcq-setup','tkcq_setup_admin');
+});
+add_action('add_meta_boxes_tkc_quest',function(){add_meta_box('tkcq-fields','Round details / 本期任务设置','tkcq_fields','tkc_quest','normal','high');add_meta_box('tkcq-winner','Selected participant / 获选者','tkcq_winner_box','tkc_quest','side');});
+function tkcq_fields($post){
+ wp_nonce_field('tkcq_fields','tkcq_nonce');$ts=(int)get_post_meta($post->ID,'_tkcq_deadline',true);$deadline=$ts?wp_date('Y-m-d\TH:i',$ts,new DateTimeZone('Europe/Tallinn')):(new DateTimeImmutable('now',new DateTimeZone('Europe/Tallinn')))->modify('+7 days')->format('Y-m-d\TH:i');
+ echo '<p>Use the main editor above for the English photo mission. Use Clue image for the location clue; Featured picture is a separate listing cover. All check-ins are shared between the two languages.</p><p><label><strong>Deadline — Europe/Tallinn / 截止时间（塔林） *</strong><br><input type="datetime-local" name="tkcq_deadline" value="'.esc_attr($deadline).'"></label></p><p>Daylight saving time is handled automatically. New submissions are rejected at this exact time.</p>';
+ foreach(['hint'=>'Area hint / 区域提示 *','gesture'=>'Required gesture / 指定手势 *','title_et'=>'Estonian title / 爱沙尼亚语标题','hint_et'=>'Estonian area hint','gesture_et'=>'Estonian gesture']as$key=>$label)echo '<p><label>'.esc_html($label).'<br><input class="widefat" name="tkcq_'.$key.'" maxlength="300" value="'.esc_attr(get_post_meta($post->ID,'_tkcq_'.$key,true)).'"></label></p>';
+ echo '<p><strong>Estonian photo mission / 爱沙尼亚语任务说明</strong></p>';wp_editor(get_post_meta($post->ID,'_tkcq_body_et',true),'tkcq_body_et',['textarea_name'=>'tkcq_body_et','textarea_rows'=>7,'media_buttons'=>false]);
+ $pages=get_post_meta($post->ID,'_tkcq_pages',true);if($pages){echo '<p>Preview / 查看：';foreach($pages as$lang=>$id)echo '<a href="'.esc_url(get_permalink($id)).'" target="_blank" rel="noopener">'.esc_html(strtoupper($lang)).'</a> &nbsp;';echo '</p>';}
+ echo '<p><a href="'.esc_url(add_query_arg(['post_type'=>'tkc_quest','page'=>'tkcq-checkins','round'=>$post->ID],admin_url('edit.php'))).'">View this round’s check-ins / 查看本期投稿</a></p>';
+}
+function tkcq_winner_box($post){$winner=tkcq_winner($post->ID);if($winner)echo '<p><strong>'.esc_html(get_post_meta($winner,'_tkcq_nickname',true)).'</strong> — submission #'.absint($winner).'</p>';else echo '<p>No selected participant yet.</p>';
+ echo '<p><label><input type="checkbox" name="tkcq_winner_public" value="1" '.checked(get_post_meta($post->ID,'_tkcq_winner_public',true),1,false).'> Publish selected nickname / 公布获选昵称</label></p><p>Choose one submission in Check-ins after the deadline. This adds the selected nickname announcement. New check-ins are public comments; email always stays private.</p>';
+}
+add_filter('wp_insert_post_data',function($data,$postarr){
+ if(($data['post_type']??'')!=='tkc_quest'||empty($_POST['tkcq_nonce'])||!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['tkcq_nonce'])),'tkcq_fields'))return $data;
+ if(!empty($postarr['ID'])&&get_post_meta($postarr['ID'],'_tkcq_test',true)&&in_array($data['post_status'],['publish','future'],true)){$data['post_status']='private';return $data;}
+ if(in_array($data['post_status'],['publish','future'],true)){
+ $id=absint($postarr['ID']??0);$deadline=tkcq_deadline_parse(sanitize_text_field(wp_unslash($_POST['tkcq_deadline']??'')));$image=absint($_POST['_thumbnail_id']??get_post_thumbnail_id($id));
+ if(!$deadline||!$image||trim(wp_strip_all_tags(wp_unslash($data['post_title'])))===''||trim(wp_strip_all_tags(wp_unslash($data['post_content'])))===''||empty($_POST['tkcq_hint'])||empty($_POST['tkcq_gesture'])){$data['post_status']='draft';set_transient('tkcq_invalid_'.get_current_user_id(),1,60);}
+ }return $data;
+},30,2);
+add_action('admin_notices',function(){if(get_transient('tkcq_invalid_'.get_current_user_id())){delete_transient('tkcq_invalid_'.get_current_user_id());echo '<div class="notice notice-error"><p>Saved as draft: please add a title, clue image, mission, hint, gesture and valid Tallinn deadline before publishing. 已保存为草稿，请补齐必填内容。</p></div>';}});
+add_action('save_post_tkc_quest',function($id,$post){
+ if(wp_is_post_revision($id)||wp_is_post_autosave($id)||empty($_POST['tkcq_nonce'])||!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['tkcq_nonce'])),'tkcq_fields')||!current_user_can('edit_post',$id))return;
+ foreach(['hint','gesture','title_et','hint_et','gesture_et']as$key)update_post_meta($id,'_tkcq_'.$key,sanitize_text_field(wp_unslash($_POST['tkcq_'.$key]??'')));
+ update_post_meta($id,'_tkcq_deadline',tkcq_deadline_parse(sanitize_text_field(wp_unslash($_POST['tkcq_deadline']??''))));update_post_meta($id,'_tkcq_body_et',wp_kses_post(wp_unslash($_POST['tkcq_body_et']??'')));
+ update_post_meta($id,'_tkcq_winner_public',isset($_POST['tkcq_winner_public'])?1:0);
+},10,2);
+add_action('save_post_tkc_quest',function($id,$post){if(!wp_is_post_revision($id)&&!wp_is_post_autosave($id)&&$post->post_status!=='auto-draft')tkcq_sync_pages($id);},30,2);
+function tkcq_sync_pages($id){
+ static $syncing=false;if($syncing)return;$p=get_post($id);if(!$p||$p->post_type!=='tkc_quest')return;$syncing=true;
+ try{$pages=get_post_meta($id,'_tkcq_pages',true);$pages=is_array($pages)?$pages:[];$old=get_post_meta($id,'_tkcq_synced_status',true);$status=in_array($p->post_status,['publish','private'],true)?$p->post_status:'draft';
+ foreach(['en','et']as$lang){$content='<!-- wp:shortcode -->[tkc_city_egg id="'.$id.'"]<!-- /wp:shortcode -->';$page=['post_type'=>'page','post_title'=>tkcq_title($id,$lang),'post_status'=>$status,'post_content'=>$content,'comment_status'=>'closed'];
+ if(!empty($pages[$lang])&&get_post_type($pages[$lang])==='page'){$page['ID']=$pages[$lang];if(get_post_status($page['ID'])==='trash'&&$p->post_status==='trash')continue;}
+ else{$page['post_name']='city-surprise-'.$id.($lang==='et'?'-et':'');$map=get_option('tkc_page_map',[]);if(!empty($map['activities'][$lang]))$page['post_parent']=$map['activities'][$lang];}
+ $pid=!empty($page['ID'])?wp_update_post(wp_slash($page),true):wp_insert_post(wp_slash($page),true);if(is_wp_error($pid))continue;$pages[$lang]=$pid;update_post_meta($pid,'_tkcq_source',$id);update_post_meta($pid,'_tkcq_lang',$lang);if(function_exists('pll_set_post_language'))pll_set_post_language($pid,$lang);
+ }update_post_meta($id,'_tkcq_pages',$pages);update_post_meta($id,'_tkcq_synced_status',$p->post_status);if(count($pages)===2&&function_exists('pll_save_post_translations'))pll_save_post_translations($pages);
+ }finally{$syncing=false;}
+}
+add_action('transition_post_status',function($new,$old,$post){if($post->post_type==='tkc_quest'&&$new!==$old&&in_array($new,['trash','draft','private','publish','future'],true))tkcq_sync_pages($post->ID);},40,3);
+add_action('add_meta_boxes_page',function($post){$source=(int)get_post_meta($post->ID,'_tkcq_source',true);if($source)add_meta_box('tkcq-source','City Surprise content source',function()use($source){echo '<p>Edit this round in City Surprise. Keep the display shortcode here.</p><a class="button" href="'.esc_url(get_edit_post_link($source)).'">Edit City Surprise / 编辑任务</a>';},'page','side','high');});
+add_filter('manage_tkc_quest_posts_columns',function($columns){return ['cb'=>$columns['cb'],'title'=>'Round / 期次','tkcq_deadline'=>'Deadline / 截止','tkcq_status'=>'Check-ins / 投稿','date'=>$columns['date']];});
+add_action('manage_tkc_quest_posts_custom_column',function($col,$id){if($col==='tkcq_deadline')echo esc_html(tkcq_deadline_label($id));if($col==='tkcq_status'){echo esc_html(tkcq_open($id)?'Open':'Closed').' · <a href="'.esc_url(add_query_arg(['post_type'=>'tkc_quest','page'=>'tkcq-checkins','round'=>$id],admin_url('edit.php'))).'">View check-ins</a>';if(tkcq_winner($id))echo '<br>Selected: '.esc_html(get_post_meta(tkcq_winner($id),'_tkcq_nickname',true));}},10,2);
+function tkcq_entries_admin(){
+ if(!current_user_can('edit_pages'))return;$round=absint($_GET['round']??0);$entry=absint($_GET['entry']??0);$page=max(1,absint($_GET['paged']??1));
+ echo '<div class="wrap"><h1>City Surprise — Check-ins / 投稿</h1><p>Contact emails are private. New check-ins appear below the activity; manage visibility in Comments. Older private submissions stay private. 邮箱仅供后台查看；在 Comments 管理公开投稿。</p>';
+ if(isset($_GET['selected']))echo '<div class="notice notice-success"><p>Selected participant updated. The nickname is only public if enabled in the round editor.</p></div>';
+ echo '<form method="get"><input type="hidden" name="post_type" value="tkc_quest"><input type="hidden" name="page" value="tkcq-checkins"><label>Round / 期次 <select name="round"><option value="0">All rounds</option>';
+ foreach(get_posts(['post_type'=>'tkc_quest','post_status'=>['publish','private','draft','future'],'numberposts'=>-1,'lang'=>'','suppress_filters'=>true])as$p)echo '<option value="'.absint($p->ID).'" '.selected($round,$p->ID,false).'>'.esc_html($p->post_title).' (#'.absint($p->ID).')</option>';echo '</select></label> ';submit_button('Filter','secondary','',false);echo '</form>';
+ if($entry){$quest=(int)get_post_meta($entry,'_tkcq_quest_id',true);if(!$quest||get_post_type($entry)!=='flamingo_inbound'||get_post_status($entry)!=='publish'){echo '<p>Submission unavailable.</p></div>';return;}
+ tkcq_comment_admin_link($entry);
+ echo '<h2>'.esc_html(get_post_meta($entry,'_tkcq_nickname',true)).' — #'.$entry.'</h2><p>Round: '.esc_html(get_the_title($quest)).'</p><p>Submitted: '.esc_html(wp_date('Y-m-d H:i T',get_post_time('U',true,$entry),new DateTimeZone('Europe/Tallinn'))).'</p><a href="'.esc_url(tkcq_photo_url($entry)).'" target="_blank" rel="noopener"><img class="tkcq-admin-photo" style="display:block;max-width:100%;max-height:600px;height:auto" src="'.esc_url(tkcq_photo_url($entry)).'" alt="Submitted photo"></a><table class="widefat striped">';
+ foreach(['_tkcq_email'=>'Email / 邮箱（不公开）','_tkcq_place'=>'Recommended place / 推荐地点','_tkcq_address'=>'Address / 地址','_tkcq_comment'=>'Comment / 留言']as$key=>$label)echo '<tr><th>'.esc_html($label).'</th><td>'.nl2br(esc_html(get_post_meta($entry,$key,true))).'</td></tr>';echo '</table>';tkcq_selection_form($quest,$entry);echo '</div>';return;}
+ $meta=$round?['key'=>'_tkcq_quest_id','value'=>$round]:['key'=>'_tkcq_quest_id','compare'=>'EXISTS'];$query=new WP_Query(['post_type'=>'flamingo_inbound','post_status'=>'publish','posts_per_page'=>20,'paged'=>$page,'lang'=>'','suppress_filters'=>true,'meta_query'=>[$meta],'orderby'=>'date','order'=>'DESC']);
+ echo '<p>'.absint($query->found_posts).' check-in(s)</p><table class="widefat striped"><thead><tr><th>Photo</th><th>Nickname</th><th>Email (private)</th><th>Round</th><th>Recommended place</th><th>Address</th><th>Comment</th><th>Submitted</th><th>Selection</th></tr></thead><tbody>';
+ foreach($query->posts as$p){$id=$p->ID;$quest=(int)get_post_meta($id,'_tkcq_quest_id',true);$url=add_query_arg(['post_type'=>'tkc_quest','page'=>'tkcq-checkins','entry'=>$id],admin_url('edit.php'));echo '<tr><td><a href="'.esc_url($url).'"><img src="'.esc_url(tkcq_photo_url($id)).'" width="110" style="max-height:100px;object-fit:contain" alt="Submitted photo"></a></td><td><a href="'.esc_url($url).'">'.esc_html(get_post_meta($id,'_tkcq_nickname',true)).'</a><br>#'.absint($id).'</td><td>'.esc_html(get_post_meta($id,'_tkcq_email',true)).'</td><td>'.esc_html(get_the_title($quest)).'</td>';
+ foreach(['_tkcq_place','_tkcq_address','_tkcq_comment']as$key)echo '<td>'.nl2br(esc_html(get_post_meta($id,$key,true))).'</td>';echo '<td>'.esc_html(wp_date('d.m.Y H:i',get_post_time('U',true,$id),new DateTimeZone('Europe/Tallinn'))).'</td><td>';if(tkcq_winner($quest)===$id)echo '<strong>Selected / 已获选</strong>';else echo '<a href="'.esc_url($url).'">Review / 查看</a>';echo '</td></tr>';
+ }if(!$query->posts)echo '<tr><td colspan="9">No check-ins yet / 暂无投稿</td></tr>';echo '</tbody></table>';
+ if($query->max_num_pages>1)echo '<div class="tablenav">'.paginate_links(['base'=>str_replace('999999999','%#%',esc_url(add_query_arg('paged',999999999))),'current'=>$page,'total'=>$query->max_num_pages]).'</div>';echo '</div>';
+}
+function tkcq_selection_form($quest,$entry){
+ if(get_post_type($quest)!=='tkc_quest')return;if((int)get_post_meta($quest,'_tkcq_deadline',true)>time()){echo '<p>Choose the selected participant after the deadline. 截止后可标记获选者。</p>';return;}
+ echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field('tkcq_winner_'.$quest);echo '<input type="hidden" name="action" value="tkcq_select_winner"><input type="hidden" name="round" value="'.absint($quest).'"><input type="hidden" name="entry" value="'.absint($entry).'">';submit_button(tkcq_winner($quest)===$entry?'Clear selection / 取消获选标记':'Select this participant / 标记为本期获选者');echo '<p>Publishing is a separate checkbox in <a href="'.esc_url(get_edit_post_link($quest)).'">the round editor</a>.</p></form>';
+}
+add_action('admin_post_tkcq_select_winner',function(){if(!current_user_can('edit_pages'))wp_die('Not authorised.');$q=absint($_POST['round']??0);$entry=absint($_POST['entry']??0);check_admin_referer('tkcq_winner_'.$q);if(get_post_type($q)!=='tkc_quest'||!current_user_can('edit_post',$q)||(int)get_post_meta($q,'_tkcq_deadline',true)>time()||get_post_type($entry)!=='flamingo_inbound'||get_post_status($entry)!=='publish'||(int)get_post_meta($entry,'_tkcq_quest_id',true)!==$q)wp_die('Invalid selection.');update_post_meta($q,'_tkcq_winner',tkcq_winner($q)===$entry?0:$entry);update_post_meta($q,'_tkcq_winner_public',0);wp_safe_redirect(add_query_arg(['post_type'=>'tkc_quest','page'=>'tkcq-checkins','entry'=>$entry,'selected'=>1],admin_url('edit.php')));exit;});

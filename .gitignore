@@ -1,0 +1,42 @@
+# Local operational records and generated output
+/backups/
+/output/
+/tmp/
+/WEBSITE-HANDOVER.md
+/WEBSITE-COMPLETE-GUIDE-ZH.md
+/CITY-EGGS-GUIDE-ZH.md
+/CITY-SURPRISE-GUIDE-ZH.md
+/EVENT-GALLERY-GUIDE-ZH.md
+/SKY-CITY-GUIDE-ZH.md
+/site-source/*.zip
+
+# WordPress runtime and private data
+wp-config.php
+wp-config-*.php
+.env
+.env.*
+!.env.example
+*.sql
+*.sql.gz
+*.sqlite
+*.db
+*.wxr
+*.xml
+wp-content/uploads/
+wp-content/cache/
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+
+# Build and editor files
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+vendor/
+.vscode/
+.idea/
+/dist/

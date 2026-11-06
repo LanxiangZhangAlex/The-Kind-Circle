@@ -1,0 +1,17 @@
+name: Validate source
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public files
+        run: python3 scripts/check_public_files.py
+      - name: Check PHP syntax
+        run: find site-source -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Build WordPress packages
+        run: python3 scripts/package.py

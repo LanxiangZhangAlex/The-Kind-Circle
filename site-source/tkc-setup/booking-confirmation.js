@@ -1,0 +1,1 @@
+document.addEventListener('em_booking_success',function(event){if(event.detail && event.detail.response && event.detail.response.success && !event.detail.response.gateway && window.tkcConfirmationUrl){window.location.assign(window.tkcConfirmationUrl);}});

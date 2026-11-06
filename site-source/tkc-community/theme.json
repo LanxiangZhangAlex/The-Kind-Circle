@@ -1,0 +1,148 @@
+{
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "layout": {
+      "contentSize": "1120px",
+      "wideSize": "1280px"
+    },
+    "color": {
+      "defaultPalette": false,
+      "palette": [
+        {
+          "name": "Light Blue",
+          "slug": "blue",
+          "color": "#AFC3E3"
+        },
+        {
+          "name": "Beige",
+          "slug": "cream",
+          "color": "#F7EDE0"
+        },
+        {
+          "name": "Dark Green",
+          "slug": "green",
+          "color": "#455C50"
+        },
+        {
+          "name": "Dark Blue",
+          "slug": "navy",
+          "color": "#172D4D"
+        },
+        {
+          "name": "Light Mauve",
+          "slug": "mauve",
+          "color": "#C4B0D5"
+        },
+        {
+          "name": "White",
+          "slug": "white",
+          "color": "#FFFFFF"
+        }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "name": "Montserrat",
+          "slug": "montserrat",
+          "fontFamily": "Montserrat, sans-serif",
+          "fontFace": [
+            {
+              "fontFamily": "Montserrat",
+              "fontStyle": "normal",
+              "fontWeight": "600",
+              "src": [
+                "file:./assets/montserrat.ttf"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Open Sans",
+          "slug": "open-sans",
+          "fontFamily": "\"Open Sans\", sans-serif",
+          "fontFace": [
+            {
+              "fontFamily": "Open Sans",
+              "fontStyle": "normal",
+              "fontWeight": "400",
+              "src": [
+                "file:./assets/open-sans.ttf"
+              ]
+            }
+          ]
+        }
+      ],
+      "fontSizes": [
+        {
+          "name": "Small",
+          "slug": "small",
+          "size": "14px"
+        },
+        {
+          "name": "Body",
+          "slug": "body",
+          "size": "17px"
+        },
+        {
+          "name": "Large",
+          "slug": "large",
+          "size": "24px"
+        }
+      ]
+    },
+    "spacing": {
+      "units": [
+        "px",
+        "rem",
+        "%",
+        "vw",
+        "vh"
+      ]
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "#FFFFFF",
+      "text": "#172D4D"
+    },
+    "typography": {
+      "fontFamily": "var:preset|font-family|open-sans",
+      "fontSize": "17px",
+      "lineHeight": "1.75"
+    },
+    "spacing": {
+      "blockGap": "24px"
+    },
+    "elements": {
+      "heading": {
+        "typography": {
+          "fontFamily": "var:preset|font-family|montserrat",
+          "fontWeight": "600"
+        }
+      },
+      "button": {
+        "color": {
+          "background": "#455C50",
+          "text": "#FFFFFF"
+        },
+        "border": {
+          "radius": "7px"
+        }
+      }
+    }
+  },
+  "templateParts": [
+    {
+      "name": "header",
+      "title": "Header",
+      "area": "header"
+    },
+    {
+      "name": "footer",
+      "title": "Footer",
+      "area": "footer"
+    }
+  ]
+}
