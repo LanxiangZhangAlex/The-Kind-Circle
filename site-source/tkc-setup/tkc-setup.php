@@ -2,7 +2,7 @@
 /**
  * Plugin Name: The Kind Circle Site Tools
  * Description: TKC bilingual page setup, shared event presentation, and form workflow integration. Uses Polylang, Events Manager, Contact Form 7, Flamingo and Newsletter.
- * Version: 1.8.0
+ * Version: 1.8.1
  * Requires PHP: 7.4
  * License: GPL-2.0-or-later
  */

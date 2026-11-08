@@ -7,6 +7,7 @@ require_once __DIR__.'/city-eggs-setup.php';
 require_once __DIR__.'/activities-layout.php';
 require_once __DIR__.'/city-surprise-comments.php';
 require_once __DIR__.'/city-surprise-cover.php';
+require_once __DIR__.'/city-surprise-content.php';
 function tkcq_et(){return function_exists('tkc_lang')&&tkc_lang()==='et';}
 function tkcq_text($en,$et){return tkcq_et()?$et:$en;}
 function tkcq_deadline_parse($input){
@@ -51,9 +52,8 @@ function tkcq_detail($attrs){
  $out='<section class="tkc-page-intro tkc-section tkcq-intro"><p class="tkc-label">'.esc_html(tkcq_text('City Surprise','City Surprise')).'</p><h1>'.esc_html(tkcq_title($id)).'</h1><p><span class="tkc-event-status">'.esc_html($open?tkcq_text('Open for check-ins','Osalemine avatud'):tkcq_text('Closed','Lõppenud')).'</span></p><p>'.esc_html(tkcq_text('Deadline (Tallinn time): ','Tähtaeg (Tallinna aeg): ').tkcq_deadline_label($id)).'</p></section><div class="tkc-body tkcq-detail">';
  if($post->post_status==='private')$out.='<p class="tkc-note">Private verification task — only visible to website managers.</p>';
  $image=get_the_post_thumbnail_url($id,'full');if($image)$out.='<figure class="tkcq-clue"><img src="'.esc_url($image).'" alt="'.esc_attr(tkcq_text('Location clue: ','Asukoha vihje: ').tkcq_title($id)).'"><figcaption>'.esc_html(tkcq_text('Find the place shown in this image.','Leia pildil kujutatud koht.')).'</figcaption></figure>';
- $out.='<div class="tkcq-task"><h2>'.esc_html(tkcq_text('Hint','Vihje')).'</h2><p>'.esc_html(tkcq_field($id,'hint')).'</p><h2>'.esc_html(tkcq_text('Photo mission','Fotoülesanne')).'</h2>';
  $body=$lang==='et'?(get_post_meta($id,'_tkcq_body_et',true)?:$post->post_content):$post->post_content;
- $out.=wpautop(do_blocks(wp_kses_post($body))).'<p><strong>'.esc_html(tkcq_text('Required gesture: ','Nõutud žest: ')).'</strong>'.esc_html(tkcq_field($id,'gesture')).'</p><p>'.esc_html(tkcq_text('Include the location and the required gesture in the same photo. You do not need to show your face.','Jäädvusta koht ja nõutud žest samale fotole. Nägu ei pea näitama.')).'</p></div>';
+ $out.='<div class="tkcq-task">'.tkcq_task_markup($body,tkcq_field($id,'hint'),tkcq_field($id,'gesture'),$lang).'</div>';
  $winner=tkcq_winner($id);if(!$open&&$winner&&get_post_meta($id,'_tkcq_winner_public',true))$out.='<section class="tkc-note tkcq-winner"><h2>'.esc_html(tkcq_text('Selected participant','Väljavalitud osaleja')).'</h2><p>'.esc_html(get_post_meta($winner,'_tkcq_nickname',true)).'</p></section>';
  if($open){$forms=get_option('tkcq_forms',[]);$fid=absint($forms[$lang]??0);if($fid&&class_exists('WPCF7_ContactForm')){
  $out.='<p><a class="tkc-button" href="#city-egg-check-in">'.esc_html(tkcq_text('Submit a check-in','Saada avastusfoto')).'</a></p><section id="city-egg-check-in" class="tkcq-submit"><h2>'.esc_html(tkcq_text('Submit a check-in','Saada avastusfoto')).'</h2>';

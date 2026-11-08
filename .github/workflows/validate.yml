@@ -15,5 +15,7 @@ jobs:
         run: find site-source -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Test anonymous interaction boundaries
         run: php tests/online-interactions.php
+      - name: Test City Surprise descriptions
+        run: php tests/city-description.php
       - name: Build WordPress packages
         run: python3 scripts/package.py

@@ -39,7 +39,7 @@ docs/
   validate.yml         PHP syntax and public-file checks
 ```
 
-The theme version is **1.1.3** and Site Tools is **1.8.0** at this source snapshot. The live site uses WordPress **7.1.4**; Site Tools declares PHP **7.4+**. These are recorded versions, not a recommendation to keep an unsupported runtime. Validate compatibility before upgrading WordPress, PHP or dependencies.
+The theme version is **1.1.3** and Site Tools is **1.8.1** at this source snapshot. The live site uses WordPress **7.1.4**; Site Tools declares PHP **7.4+**. These are recorded versions, not a recommendation to keep an unsupported runtime. Validate compatibility before upgrading WordPress, PHP or dependencies.
 
 ## Running the website
 
@@ -77,6 +77,7 @@ A Git push stores source changes on GitHub. **It does not deploy the website.** 
 python3 scripts/check_public_files.py
 python3 scripts/package.py
 php tests/online-interactions.php
+php tests/city-description.php
 find site-source -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 

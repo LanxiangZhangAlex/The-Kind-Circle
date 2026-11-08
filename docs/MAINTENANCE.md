@@ -51,3 +51,7 @@ Discussion replies need only a required nickname (80 characters maximum) and com
 Manage replies in **Comments → Online activity comments / 线上活动评论**. Edit, Unapprove or Trash a reply without withdrawing its parent photo. If a parent entry or activity is no longer public, guest interaction reads and writes are rejected; restoring publication preserves previous reactions and approved replies.
 
 Back up the complete database, including the prefixed `tkc_online_likes` table and WordPress `comments`/`commentmeta`. WXR and photo-export ZIPs alone do not restore likes. Updating Site Tools creates the likes table through an administrator-only schema upgrade. Rolling back plugin files leaves interaction data in the database; a full rollback may also require restoring the database.
+
+## City Surprise description layouts
+
+The task editor accepts either mission-only text or a complete formatted description. A complete description with a **Hint** or **Vihje** heading is rendered as authored, including its headings, gesture and instructions; automatic task sections are not added again. Use the editor heading menu, without editing code. Mission-only rounds retain the automatic hint/mission/gesture layout. Maintain each language separately. The area-hint field still supplies list cards; deadline and clue/cover images remain in their own settings.
