@@ -2,3 +2,6 @@
 
 /* Emoji in messages must never inherit photo preview sizing. */
 .tkcsky-photo figcaption img.emoji,.tkcsky-photo figcaption img.wp-smiley{display:inline!important;width:1em!important;height:1em!important;min-height:0!important;max-height:1em!important;border-radius:0;margin:0 .07em!important;vertical-align:-.1em}
+
+/* Submission feed mirrors City Surprise: one large, uncropped photo per row. */
+.tkcsky-wall{border-top:1px solid #d6ded7;margin-top:48px;padding-top:28px}.tkcsky-wall .tkcsky-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:24px}.tkcsky-wall .tkcsky-photo{padding:24px;box-sizing:border-box}.tkc-body .tkcsky-photo>.tkc-gallery-link{display:block;aspect-ratio:auto;margin:0 0 20px;background:#fff}.tkc-body .tkcsky-photo>.tkc-gallery-link>img{display:block;width:auto;height:auto;max-width:100%;max-height:560px!important;object-fit:contain;border-radius:8px;margin:0}.tkcsky-wall .tkcsky-photo figcaption{padding:0;gap:6px}.tkcsky-wall .tkcsky-photo figcaption strong{font-size:1.1rem}.tkcsky-wall .tkcsky-photo figcaption p{font-size:16px;line-height:1.7}.tkcsky-wall .tkci-interactions{margin-top:22px}@media(max-width:700px){.tkcsky-wall .tkcsky-photo{padding:18px}}

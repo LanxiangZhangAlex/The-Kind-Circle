@@ -25,3 +25,9 @@ Restore the previous plugin/theme package if the issue is limited to code. If a 
 ## Content seed
 
 `site-source/build_content.py` regenerates `site-source/tkc-setup/content.json`, the original bilingual seed. This does not export the live database and does not capture later editor changes. Review generated differences before committing; do not use seed regeneration to overwrite production page edits.
+
+## Site Tools 1.8.0 interaction schema
+
+The first administrator request after this update creates the prefixed `tkc_online_likes` table. Load an admin page before testing guest hearts. Comments use the native WordPress tables with the `tkc_online_reply` type. Include these tables in backups. No production page bodies or existing photo records need migration for the new layout and controls.
+
+Local boundary checks run with `php tests/online-interactions.php` and require SQLite3 and mbstring. They use synthetic records and an in-memory database, not the live website. They cover public/private target gating, nonce and origin validation, anonymous votes, duplicate prevention, comment field validation, privacy-safe responses and moderation visibility. They do not replace WordPress integration and browser checks.

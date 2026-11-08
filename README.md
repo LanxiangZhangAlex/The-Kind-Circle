@@ -12,7 +12,8 @@ The site helps people find community activities, register for events, share disc
 - **In-person activities:** Events Manager records, registration forms, availability, upcoming and past activity lists, and native image galleries with a lightbox.
 - **Online activities:** a shared listing for City Surprise rounds and online projects, displayed below in-person activities on the homepage and beside them on the Activities page.
 - **City Surprise:** image clues, area hints, photo tasks, Tallinn-time deadlines, check-in submissions and a selected participant. Public check-ins keep participant email addresses private.
-- **The Sky, The City:** photo sharing with organiser review before publication, city details and a photo viewer.
+- **The Sky, The City:** photo sharing with organiser review before publication, city details and a photo viewer. Published photos appear at the bottom of the detail page in a single-column feed.
+- **Guest interactions:** red-heart counts and nickname/comment discussions on each public City Surprise or Sky submission, with native WordPress comment moderation. No account or email is required for a discussion reply.
 - **Editable site content:** contact details, social links, form copy, metadata, navigation, partner content and native page blocks.
 - **Team page:** portraits, names, roles, languages, personal messages and LinkedIn links, edited as native WordPress blocks.
 - **Enquiries and newsletter:** Contact Form 7, Flamingo and Newsletter integration.
@@ -29,6 +30,8 @@ scripts/
   package.py           Build installable theme and plugin ZIPs
   check_public_files.py Check tracked files for private-data mistakes
   README.md            Scope and limits of the checks
+tests/
+  online-interactions.php Synthetic boundary tests (no live-site connection)
 docs/
   MAINTENANCE.md       Daily editing and maintenance
   DEPLOYMENT.md        Installation, updates, validation and rollback
@@ -36,7 +39,7 @@ docs/
   validate.yml         PHP syntax and public-file checks
 ```
 
-The theme version is **1.1.3** and Site Tools is **1.7.5** at this source snapshot. The live site uses WordPress **7.1.4**; Site Tools declares PHP **7.4+**. These are recorded versions, not a recommendation to keep an unsupported runtime. Validate compatibility before upgrading WordPress, PHP or dependencies.
+The theme version is **1.1.3** and Site Tools is **1.8.0** at this source snapshot. The live site uses WordPress **7.1.4**; Site Tools declares PHP **7.4+**. These are recorded versions, not a recommendation to keep an unsupported runtime. Validate compatibility before upgrading WordPress, PHP or dependencies.
 
 ## Running the website
 
@@ -73,10 +76,11 @@ A Git push stores source changes on GitHub. **It does not deploy the website.** 
 ```sh
 python3 scripts/check_public_files.py
 python3 scripts/package.py
-find site-source -name '*.php' -exec php -l {} \;
+php tests/online-interactions.php
+find site-source -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 
-GitHub Actions runs PHP syntax checks and the public-file check. These checks do not replace testing the rendered site, bookings, uploads, email delivery and access controls in a staging environment. Before deployment, back up the database, media and the previous theme/plugin packages. Verify both languages, desktop and mobile after deployment.
+GitHub Actions runs PHP syntax checks, isolated guest-interaction boundary tests and the public-file check. These checks do not replace testing the rendered site, bookings, uploads, email delivery and access controls in a staging environment. Before deployment, back up the database, media and the previous theme/plugin packages. Verify both languages, desktop and mobile after deployment.
 
 ## Privacy and publication boundaries
 

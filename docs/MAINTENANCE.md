@@ -26,6 +26,8 @@ Before emailing registrants, confirm the event, booking status, recipients and m
 
 **Online projects:** maintain projects such as The Sky, The City. Review photo submissions in the moderation screen before publishing them. Participant emails and unpublished photographs must not be committed to this repository.
 
+Sky detail pages show the introduction, submission form/status, then the photo feed at the bottom. Both desktop and mobile show one submission per row; photos fit within a 560px maximum height and retain the lightbox.
+
 The homepage shows in-person activities above online activities. The Activities page groups in-person and online activities in separate columns on desktop. Listings are generated from activity records; editors should not duplicate them manually in page HTML.
 
 ## Shared settings and newsletter
@@ -39,3 +41,13 @@ Use **Website content** for shared contact and social links, footer text, and fo
 - After changes, verify EN/ET, menu links, desktop/mobile, image sizes and activity status/deadlines.
 - Periodically test restoration, review administrative access and remove obsolete private exports from operational storage according to the organisation’s retention decisions.
 - Keep code changes in Git; keep live content, registrations, uploads and server configuration in the separate backup process.
+
+## Guest likes and discussion replies
+
+Every public City Surprise check-in and approved Sky photo has a red heart and shared like count. A signed, HttpOnly, SameSite=Lax cookie remembers a browser for 180 days, set on its first like; the server stores a derived visitor hash. Repeat requests for the same desired state do not add duplicate votes. Clearing cookies or using another browser creates another visitor identity, so this is not a one-person-one-vote mechanism.
+
+Discussion replies need only a required nickname (80 characters maximum) and comment (2,000 characters maximum). No login or email is required. Replies are public, load 10 at a time, and use basic rate limiting, duplicate prevention, a honeypot and WordPress's disallowed-comment list. They do not trigger subscription or email notifications. No email, IP or user-agent field is stored in the reply object.
+
+Manage replies in **Comments → Online activity comments / 线上活动评论**. Edit, Unapprove or Trash a reply without withdrawing its parent photo. If a parent entry or activity is no longer public, guest interaction reads and writes are rejected; restoring publication preserves previous reactions and approved replies.
+
+Back up the complete database, including the prefixed `tkc_online_likes` table and WordPress `comments`/`commentmeta`. WXR and photo-export ZIPs alone do not restore likes. Updating Site Tools creates the likes table through an administrator-only schema upgrade. Rolling back plugin files leaves interaction data in the database; a full rollback may also require restoring the database.
